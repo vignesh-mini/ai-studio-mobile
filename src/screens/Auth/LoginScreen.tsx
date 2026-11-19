@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -31,16 +30,20 @@ export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState<Pending>(null);
+  // Shown inline: Android can drop Alert dialogs (e.g. while DevTools has focus),
+  // which made failed sign-ins look like nothing happened.
+  const [error, setError] = useState<string | null>(null);
 
   const run = async (
     kind: Exclude<Pending, null>,
     action: () => Promise<AuthSession>,
   ) => {
     setPending(kind);
+    setError(null);
     try {
       setSession(await action());
-    } catch (error) {
-      Alert.alert('Sign in failed', errorMessage(error));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setPending(null);
     }
@@ -48,10 +51,7 @@ export function LoginScreen() {
 
   const submitEmail = () => {
     if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 6) {
-      Alert.alert(
-        'Check your details',
-        'Enter a valid email and a password of 6+ characters.',
-      );
+      setError('Enter a valid email and a password of 6+ characters.');
       return;
     }
     run('email', () =>
@@ -113,7 +113,10 @@ export function LoginScreen() {
           {mode === 'register' ? (
             <TextInput
               value={name}
-              onChangeText={setName}
+              onChangeText={v => {
+                setName(v);
+                setError(null);
+              }}
               placeholder="Name"
               placeholderTextColor={colors.textFaint}
               style={styles.input}
@@ -122,7 +125,10 @@ export function LoginScreen() {
           ) : null}
           <TextInput
             value={email}
-            onChangeText={setEmail}
+            onChangeText={v => {
+              setEmail(v);
+              setError(null);
+            }}
             placeholder="Email"
             placeholderTextColor={colors.textFaint}
             style={styles.input}
@@ -132,7 +138,10 @@ export function LoginScreen() {
           />
           <TextInput
             value={password}
-            onChangeText={setPassword}
+            onChangeText={v => {
+              setPassword(v);
+              setError(null);
+            }}
             placeholder="Password"
             placeholderTextColor={colors.textFaint}
             style={styles.input}
@@ -141,6 +150,11 @@ export function LoginScreen() {
               mode === 'login' ? 'current-password' : 'new-password'
             }
           />
+          {error ? (
+            <View style={styles.error} accessibilityRole="alert">
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
           <Button
             title={mode === 'login' ? 'Sign in' : 'Create account'}
             loading={pending === 'email'}
@@ -149,7 +163,10 @@ export function LoginScreen() {
           />
 
           <Pressable
-            onPress={() => setMode(m => (m === 'login' ? 'register' : 'login'))}
+            onPress={() => {
+              setError(null);
+              setMode(m => (m === 'login' ? 'register' : 'login'));
+            }}
             style={styles.switch}
           >
             <Text style={typography.muted}>
@@ -197,5 +214,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   switch: { alignItems: 'center', marginTop: spacing.sm },
+  error: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(248, 113, 113, 0.12)',
+  },
+  errorText: { color: colors.danger, fontSize: 14 },
   link: { color: colors.primary, fontWeight: '600' },
 });
