@@ -4,6 +4,7 @@ import { AppHeader } from '../../components/AppHeader';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { Icon } from '../../components/Icon';
+import Video from 'react-native-video';
 import { Screen } from '../../components/Screen';
 import { useModel } from '../../hooks/useModels';
 import type { RootScreenProps } from '../../navigation/types';
@@ -24,6 +25,7 @@ export function AssetViewerScreen({
   const removeAsset = useLibraryStore(s => s.removeAsset);
   const model = useModel(asset?.modelId);
   const [saving, setSaving] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   if (!asset) {
     return (
@@ -69,23 +71,46 @@ export function AssetViewerScreen({
         />
       }
     >
-      <View>
+      {asset.type === 'video' ? (
+        <View>
+          <Video
+            source={{ uri: asset.url }}
+            style={[
+              styles.media,
+              { aspectRatio: aspectRatioValue(asset.aspectRatio) },
+            ]}
+            controls
+            paused
+            resizeMode="contain"
+            poster={
+              asset.thumbnailUrl
+                ? { source: { uri: asset.thumbnailUrl }, resizeMode: 'cover' }
+                : undefined
+            }
+            onError={() => setVideoError(true)}
+          />
+          {videoError ? (
+            <View style={styles.videoError}>
+              <Icon name="alert-circle" size={24} color={colors.danger} />
+              <Text style={typography.caption}>
+                This video could not be played.
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : (
         <Image
-          source={{ uri: asset.thumbnailUrl ?? asset.url }}
+          source={{ uri: asset.url }}
           style={[
             styles.media,
             { aspectRatio: aspectRatioValue(asset.aspectRatio) },
           ]}
         />
-        {asset.type === 'video' ? (
-          <View style={styles.play}>
-            <Icon name="play" size={28} color={colors.white} />
-          </View>
-        ) : null}
-      </View>
-      {asset.type === 'video' ? (
+      )}
+      {asset.local && asset.type === 'video' ? (
         <Text style={typography.caption}>
-          In-app playback arrives with react-native-video in Phase 5.
+          Demo: this is a sample clip. Real generated videos play here once a
+          video provider is connected.
         </Text>
       ) : null}
 
@@ -101,24 +126,22 @@ export function AssetViewerScreen({
         </Text>
       </View>
 
-      {asset.local ? null : (
-        <Button
-          title="Save to device"
-          icon="download-outline"
-          loading={saving}
-          onPress={async () => {
-            setSaving(true);
-            try {
-              await saveToDevice(asset);
-              notify('Saved to your gallery (AI Studio album)');
-            } catch (error) {
-              notify(`Could not save: ${errorMessage(error)}`);
-            } finally {
-              setSaving(false);
-            }
-          }}
-        />
-      )}
+      <Button
+        title="Save to device"
+        icon="download-outline"
+        loading={saving}
+        onPress={async () => {
+          setSaving(true);
+          try {
+            await saveToDevice(asset);
+            notify('Saved to your gallery (AI Studio album)');
+          } catch (error) {
+            notify(`Could not save: ${errorMessage(error)}`);
+          } finally {
+            setSaving(false);
+          }
+        }}
+      />
       <Button
         title="Share"
         icon="share-outline"
@@ -154,16 +177,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.surfaceAlt,
   },
-  play: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '50%',
-    marginTop: -32,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  videoError: {
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.lg,
     backgroundColor: colors.overlay,
   },
   meta: { gap: spacing.sm },

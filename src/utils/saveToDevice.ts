@@ -25,9 +25,6 @@ const extensionFor = (asset: GeneratedAsset) =>
  * device gallery in an "AI Studio" album. The temporary file is removed afterwards.
  */
 export async function saveToDevice(asset: GeneratedAsset) {
-  if (asset.local) {
-    throw new Error('Demo items are placeholders and cannot be saved');
-  }
   await ensureAndroidPermission();
 
   const download = await ReactNativeBlobUtil.config({

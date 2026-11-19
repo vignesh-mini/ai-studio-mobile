@@ -160,6 +160,13 @@ export const mockModels: AIModel[] = [
   },
 ];
 
+/**
+ * Real, playable stand-in for generated videos until a video provider is connected:
+ * a short public-domain (CC0) clip hosted by MDN.
+ */
+export const SAMPLE_VIDEO_URL =
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+
 export const mockImageUrl = (seed: string, ratio: string, width = 768) => {
   const [w, h] = ratio.split(':').map(Number);
   return `https://picsum.photos/seed/${encodeURIComponent(
@@ -192,7 +199,7 @@ export const mockAssets: GeneratedAsset[] = [
   {
     id: 'asset_forest_video',
     type: 'video',
-    url: 'https://example.com/videos/forest.mp4',
+    url: SAMPLE_VIDEO_URL,
     thumbnailUrl: mockImageUrl('misty-forest', '16:9'),
     prompt: 'Drone shot flying through a misty forest at sunrise',
     modelId: 'wan-2.2',

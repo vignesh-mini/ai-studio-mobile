@@ -8,7 +8,7 @@ import type {
   VideoGenerateRequest,
 } from '../../types';
 import { delay, nowIso, uid } from '../../utils';
-import { mockImageUrl } from '../mock/data';
+import { mockImageUrl, SAMPLE_VIDEO_URL } from '../mock/data';
 import { createMockJob, getMockJob, isMockJob } from '../mock/jobs';
 import { api } from './client';
 
@@ -99,7 +99,7 @@ export const videoService = {
         {
           id: uid('asset'),
           type: 'video',
-          url: 'https://example.com/videos/mock.mp4',
+          url: SAMPLE_VIDEO_URL,
           thumbnailUrl: mockImageUrl(
             `${request.prompt}-${Date.now()}`,
             request.aspectRatio,
