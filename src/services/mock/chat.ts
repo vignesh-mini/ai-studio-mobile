@@ -33,7 +33,7 @@ export function buildMockReply(
     } _(mock reply)_\n\n` +
     `You asked: “${prompt}”\n\n` +
     'This answer comes from the Phase 1 mock layer. When the NestJS AI gateway is running, ' +
-    'set `useMocks: false` in `src/config/env.ts` and the same screen streams real tokens over SSE.\n\n' +
+    'set `mocks.chat: false` in `src/config/env.ts` and the same screen streams real tokens over SSE.\n\n' +
     `- Context turns sent to the model: ${messages.length}${attachments}\n` +
     '- Switching models keeps this conversation history\n\n' +
     '```ts\n' +

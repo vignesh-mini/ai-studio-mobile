@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Pressable,
@@ -15,6 +16,7 @@ import { IconButton } from '../../components/IconButton';
 import { ModelPicker } from '../../components/ModelPicker';
 import { Screen } from '../../components/Screen';
 import { useChatSession } from '../../hooks/useChatSession';
+import { useConversationMessages } from '../../hooks/useConversationSync';
 import type { TabScreenProps } from '../../navigation/types';
 import { useChatStore } from '../../store/chatStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -45,6 +47,7 @@ export function ChatScreen({ navigation, route }: TabScreenProps<'Chat'>) {
   const defaultModel = useSettingsStore(s => s.defaultChatModel);
 
   const session = useChatSession(conversation ? activeId : null);
+  const history = useConversationMessages(conversation ? activeId : null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const pendingPrompt = useRef<{ conversationId: string; text: string } | null>(
@@ -180,31 +183,37 @@ export function ChatScreen({ navigation, route }: TabScreenProps<'Chat'>) {
             listRef.current?.scrollToEnd({ animated: true })
           }
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.logo}>
-                <Icon name="sparkles" size={28} color={colors.white} />
+            history.isLoading ? (
+              <View style={styles.empty}>
+                <ActivityIndicator color={colors.primary} />
               </View>
-              <Text style={typography.h2}>How can I help today?</Text>
-              <Text style={[typography.muted, styles.center]}>
-                Switch models any time – the conversation carries over.
-              </Text>
-              <View style={styles.suggestions}>
-                {suggestions.map(s => (
-                  <Pressable
-                    key={s}
-                    style={styles.suggestion}
-                    onPress={() => session.send(s)}
-                  >
-                    <Text style={typography.body}>{s}</Text>
-                    <Icon
-                      name="arrow-forward"
-                      size={16}
-                      color={colors.textMuted}
-                    />
-                  </Pressable>
-                ))}
+            ) : (
+              <View style={styles.empty}>
+                <View style={styles.logo}>
+                  <Icon name="sparkles" size={28} color={colors.white} />
+                </View>
+                <Text style={typography.h2}>How can I help today?</Text>
+                <Text style={[typography.muted, styles.center]}>
+                  Switch models any time – the conversation carries over.
+                </Text>
+                <View style={styles.suggestions}>
+                  {suggestions.map(s => (
+                    <Pressable
+                      key={s}
+                      style={styles.suggestion}
+                      onPress={() => session.send(s)}
+                    >
+                      <Text style={typography.body}>{s}</Text>
+                      <Icon
+                        name="arrow-forward"
+                        size={16}
+                        color={colors.textMuted}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
+            )
           }
           renderItem={({ item }) => (
             <MessageBubble

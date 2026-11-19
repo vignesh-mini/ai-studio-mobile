@@ -6,7 +6,7 @@ import { api } from './client';
 
 export const accountService = {
   async profile(): Promise<User> {
-    if (env.useMocks) {
+    if (env.mocks.account) {
       await delay(200);
       return mockUser;
     }
@@ -15,7 +15,7 @@ export const accountService = {
   },
 
   async usage(): Promise<Usage> {
-    if (env.useMocks) {
+    if (env.mocks.account) {
       await delay(300);
       return mockUsage;
     }
@@ -24,7 +24,7 @@ export const accountService = {
   },
 
   async deleteAccountData(): Promise<void> {
-    if (env.useMocks) {
+    if (env.mocks.account) {
       await delay(500);
       return;
     }

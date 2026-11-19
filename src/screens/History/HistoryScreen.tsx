@@ -12,28 +12,31 @@ import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Icon } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
+import { useConversationList } from '../../hooks/useConversationSync';
 import { useModels } from '../../hooks/useModels';
 import type { RootScreenProps } from '../../navigation/types';
-import { useChatStore } from '../../store/chatStore';
+import { chatService } from '../../services/api/chatService';
+import { isListedConversation, useChatStore } from '../../store/chatStore';
 import { colors, radius, spacing, typography } from '../../theme';
-import { timeAgo } from '../../utils';
+import { errorMessage, timeAgo } from '../../utils';
 
 export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
   const conversations = useChatStore(s => s.conversations);
   const messages = useChatStore(s => s.messages);
   const deleteConversation = useChatStore(s => s.deleteConversation);
   const { data: models } = useModels();
+  const { refetch, isRefetching } = useConversationList();
   const [query, setQuery] = useState('');
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
     return Object.values(conversations)
-      .filter(c => (messages[c.id]?.length ?? 0) > 0)
+      .filter(c => isListedConversation(messages, c.id))
       .filter(
         c =>
           !q ||
           c.title.toLowerCase().includes(q) ||
-          messages[c.id].some(m => m.content.toLowerCase().includes(q)),
+          !!messages[c.id]?.some(m => m.content.toLowerCase().includes(q)),
       )
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }, [conversations, messages, query]);
@@ -50,7 +53,14 @@ export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => deleteConversation(id),
+        onPress: async () => {
+          try {
+            await chatService.deleteConversation(id);
+            deleteConversation(id);
+          } catch (error) {
+            Alert.alert('Could not delete', errorMessage(error));
+          }
+        },
       },
     ]);
 
@@ -64,6 +74,8 @@ export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
         keyExtractor={c => c.id}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        onRefresh={refetch}
+        refreshing={isRefetching}
         ListHeaderComponent={
           <View style={styles.search}>
             <Icon name="search" size={16} color={colors.textMuted} />
@@ -84,7 +96,9 @@ export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
           />
         }
         renderItem={({ item }) => {
-          const last = messages[item.id].filter(m => m.kind !== 'event').at(-1);
+          const last = messages[item.id]
+            ?.filter(m => m.kind !== 'event')
+            .at(-1);
           return (
             <Card style={styles.card} onPress={() => open(item.id)}>
               <View style={styles.flex}>

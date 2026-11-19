@@ -17,6 +17,7 @@ import type { RootScreenProps } from '../../navigation/types';
 import { streamChat } from '../../services/chatStream';
 import { useChatStore } from '../../store/chatStore';
 import { colors, radius, spacing, typography } from '../../theme';
+import { uid } from '../../utils';
 
 interface Lane {
   modelId: string;
@@ -63,9 +64,8 @@ export function CompareScreen({
       patchLane(index, { text: '', status: 'streaming' });
       return streamChat(
         {
-          conversationId: 'compare',
           modelId: lane.modelId,
-          messages: [{ role: 'user', content: text }],
+          messages: [{ id: uid('msg'), role: 'user', content: text }],
         },
         {
           onToken: token => patchLane(index, l => ({ text: l.text + token })),

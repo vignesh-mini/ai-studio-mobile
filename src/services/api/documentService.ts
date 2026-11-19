@@ -16,7 +16,7 @@ export const documentService = {
   async upload(file: LocalFile): Promise<UploadedFile> {
     if (file.size > MAX_UPLOAD_BYTES)
       throw new Error('Files must be 10 MB or smaller');
-    if (env.useMocks) {
+    if (env.mocks.documents) {
       await delay(900);
       return {
         fileId: uid('file'),
@@ -38,7 +38,7 @@ export const documentService = {
   },
 
   async analyze(file: UploadedFile): Promise<DocumentAnalysis> {
-    if (env.useMocks) {
+    if (env.mocks.documents) {
       await delay(1400);
       return {
         fileId: file.fileId,
@@ -61,7 +61,7 @@ export const documentService = {
   },
 
   async ask(fileId: string, question: string): Promise<string> {
-    if (env.useMocks) {
+    if (env.mocks.documents) {
       await delay(1000);
       return `Based on the document (mock answer): the section most relevant to “${question}” explains that requests pass through the AI gateway, which checks quota, picks a provider adapter and stores the result.`;
     }

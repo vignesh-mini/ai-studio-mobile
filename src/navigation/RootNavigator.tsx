@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useQueryClient } from '@tanstack/react-query';
 import { AssetViewerScreen } from '../screens/Library/AssetViewerScreen';
 import { CompareScreen } from '../screens/Compare/CompareScreen';
 import { DocumentsScreen } from '../screens/Documents/DocumentsScreen';
@@ -10,6 +11,7 @@ import { SplashScreen } from '../screens/Splash/SplashScreen';
 import { SubscriptionScreen } from '../screens/Subscription/SubscriptionScreen';
 import { VoiceScreen } from '../screens/Voice/VoiceScreen';
 import { useAuthStore } from '../store/authStore';
+import { useChatStore } from '../store/chatStore';
 import { colors } from '../theme';
 import { delay } from '../utils';
 import { MainTabs } from './MainTabs';
@@ -25,6 +27,16 @@ export function RootNavigator() {
   useEffect(() => {
     delay(1200).then(() => setBooting(false));
   }, []);
+
+  // Signing out (or an expired session) must not leave the previous user's chats or
+  // cached server data behind for the next account.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!isSignedIn) {
+      useChatStore.getState().reset();
+      queryClient.clear();
+    }
+  }, [isSignedIn, queryClient]);
 
   if (booting) return <SplashScreen />;
 

@@ -20,7 +20,7 @@ import { streamChat } from '../../services/chatStream';
 import { useChatStore } from '../../store/chatStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { colors, spacing, toolColors, typography } from '../../theme';
-import { errorMessage } from '../../utils';
+import { errorMessage, uid } from '../../utils';
 
 type Phase = 'idle' | 'listening' | 'transcribing' | 'thinking';
 
@@ -81,9 +81,8 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
       let full = '';
       cancelRef.current = streamChat(
         {
-          conversationId: 'voice',
           modelId,
-          messages: [{ role: 'user', content: text }],
+          messages: [{ id: uid('msg'), role: 'user', content: text }],
         },
         {
           onToken: token => {

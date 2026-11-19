@@ -1,3 +1,4 @@
+import { env } from '../src/config/env';
 import { streamChat, toPayload } from '../src/services/chatStream';
 import { useChatStore } from '../src/store/chatStore';
 
@@ -34,6 +35,11 @@ describe('chat store', () => {
 });
 
 describe('chat stream', () => {
+  // These cover the offline mock streamer; the app talks to the backend by default.
+  beforeAll(() => {
+    env.mocks.chat = true;
+  });
+
   it('keeps model-switch events and in-flight replies out of the payload', () => {
     const payload = toPayload([
       {
@@ -62,6 +68,7 @@ describe('chat stream', () => {
     ]);
     expect(payload).toEqual([
       {
+        id: '1',
         role: 'user',
         content: 'hi',
         modelId: undefined,

@@ -6,7 +6,7 @@ import { api } from './client';
 
 export const modelService = {
   async list(): Promise<AIModel[]> {
-    if (env.useMocks) {
+    if (env.mocks.models) {
       await delay(250);
       return mockModels;
     }

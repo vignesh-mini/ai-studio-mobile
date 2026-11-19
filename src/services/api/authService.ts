@@ -17,7 +17,7 @@ const mockSession = (
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthSession> {
-    if (env.useMocks) {
+    if (env.mocks.auth) {
       await delay(600);
       return mockSession(email);
     }
@@ -33,7 +33,7 @@ export const authService = {
     email: string,
     password: string,
   ): Promise<AuthSession> {
-    if (env.useMocks) {
+    if (env.mocks.auth) {
       await delay(600);
       return mockSession(email, name);
     }
@@ -53,7 +53,7 @@ export const authService = {
     provider: SocialProvider,
     idToken = '',
   ): Promise<AuthSession> {
-    if (env.useMocks) {
+    if (env.mocks.auth) {
       await delay(600);
       return mockSession();
     }

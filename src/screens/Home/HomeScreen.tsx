@@ -13,7 +13,8 @@ import { MediaTile } from '../../components/MediaGrid';
 import { Screen } from '../../components/Screen';
 import type { TabScreenProps } from '../../navigation/types';
 import { useAuthStore } from '../../store/authStore';
-import { useChatStore } from '../../store/chatStore';
+import { useConversationList } from '../../hooks/useConversationSync';
+import { isListedConversation, useChatStore } from '../../store/chatStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import { colors, radius, spacing, toolColors, typography } from '../../theme';
 import { timeAgo } from '../../utils';
@@ -33,12 +34,13 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const conversations = useChatStore(s => s.conversations);
   const messages = useChatStore(s => s.messages);
   const setActiveConversation = useChatStore(s => s.setActiveConversation);
+  useConversationList();
   const [prompt, setPrompt] = useState('');
 
   const recentChats = useMemo(
     () =>
       Object.values(conversations)
-        .filter(c => (messages[c.id]?.length ?? 0) > 0)
+        .filter(c => isListedConversation(messages, c.id))
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
         .slice(0, 3),
     [conversations, messages],

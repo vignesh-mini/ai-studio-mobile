@@ -17,7 +17,7 @@ import { api } from './client';
 
 export const imageService = {
   async generate(request: ImageGenerateRequest): Promise<JobCreatedResponse> {
-    if (env.useMocks) {
+    if (env.mocks.media) {
       await delay(300);
       const jobId = createMockJob('image', 4000 + request.count * 800, () =>
         Array.from({ length: request.count }, (_, i) => ({
@@ -43,7 +43,7 @@ export const imageService = {
   },
 
   async edit(request: ImageEditRequest): Promise<JobCreatedResponse> {
-    if (env.useMocks) {
+    if (env.mocks.media) {
       await delay(300);
       const jobId = createMockJob('image', 4500, () => [
         {
@@ -69,7 +69,7 @@ export const imageService = {
   },
 
   async enhancePrompt(prompt: string): Promise<string> {
-    if (env.useMocks) {
+    if (env.mocks.media) {
       await delay(500);
       return `${prompt
         .trim()
@@ -87,7 +87,7 @@ export const imageService = {
 
 export const videoService = {
   async generate(request: VideoGenerateRequest): Promise<JobCreatedResponse> {
-    if (env.useMocks) {
+    if (env.mocks.media) {
       await delay(300);
       const jobId = createMockJob('video', 9000, () => [
         {
@@ -117,7 +117,7 @@ export const videoService = {
 
 export const jobService = {
   async get(jobId: string): Promise<GenerationJob> {
-    if (env.useMocks) return getMockJob(jobId);
+    if (env.mocks.media) return getMockJob(jobId);
     const { data } = await api.get<GenerationJob>(`/jobs/${jobId}`);
     return data;
   },

@@ -49,7 +49,13 @@ export function useChatSession(conversationId: string | null) {
     };
 
     const cancel = streamChat(
-      { conversationId, modelId, messages: toPayload(history) },
+      {
+        conversationId,
+        assistantMessageId: assistant.id,
+        title: store.conversations[conversationId].title,
+        modelId,
+        messages: toPayload(history),
+      },
       {
         onToken: text =>
           useChatStore

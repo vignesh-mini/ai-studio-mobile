@@ -11,7 +11,7 @@ const sampleQuestions = [
 export const voiceService = {
   /** Uploads a recorded audio clip; the backend transcribes it with Whisper. */
   async transcribe(audioUri: string): Promise<string> {
-    if (env.useMocks) {
+    if (env.mocks.voice) {
       await delay(900);
       return sampleQuestions[
         Math.floor(Math.random() * sampleQuestions.length)
@@ -35,7 +35,7 @@ export const voiceService = {
 
   /** Returns a signed URL for synthesized speech of `text`. */
   async synthesize(text: string): Promise<string | null> {
-    if (env.useMocks) return null;
+    if (env.mocks.voice) return null;
     const { data } = await api.post<{ audioUrl: string }>('/audio/speech', {
       text,
     });

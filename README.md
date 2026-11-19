@@ -8,13 +8,23 @@ request goes to our NestJS gateway (`/api/v1`) with the user's JWT; the gateway 
 provider (Gemini, Groq, OpenRouter, Mistral, FLUX, Wan 2.2…), enforces quotas, and stores
 results.
 
-## Status: Phase 1 – UI with mock data
+## Status
 
-All screens work end-to-end against a local mock layer (`src/services/mock`). When the
-backend is ready, set `useMocks: false` in `src/config/env.ts`. The screens stay the same,
-because every service already has a real HTTP path.
+| Feature | Source |
+| --- | --- |
+| Sign-in (email), model catalogue, chat (streaming, history, model switching), profile, usage | **Backend** ([ai-studio-backend](https://github.com/vignesh-mini/ai-studio-backend)) |
+| Image, video, documents, voice | Local mock layer (`src/services/mock`) until Phases 4–6 |
+
+Each feature is switched in `env.mocks` in `src/config/env.ts`. Set every flag to `true`
+to run the whole app offline without the backend. Google/Apple sign-in reports
+"not set up yet" until social auth is added; use email and password.
 
 ## Run
+
+The backend must be running first (see its README). On the Android emulator the app
+calls `http://10.0.2.2:3000/api/v1`, which is the host machine's `localhost:3000`. On a
+physical phone, run `adb reverse tcp:3000 tcp:3000` and change `apiBaseUrl` to
+`http://localhost:3000/api/v1`.
 
 ```sh
 yarn install

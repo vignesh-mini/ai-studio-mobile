@@ -28,20 +28,41 @@ async function refreshTokens(): Promise<boolean> {
   }
 }
 
+/** Single-flight refresh shared by Axios and the chat SSE stream. */
+export function refreshSession(): Promise<boolean> {
+  refreshing ??= refreshTokens().finally(() => (refreshing = null));
+  return refreshing;
+}
+
+/** Shows the backend's message (e.g. "Incorrect email or password") instead of Axios's. */
+function withServerMessage(error: AxiosError) {
+  const message = (error.response?.data as { message?: unknown } | undefined)
+    ?.message;
+  if (typeof message === 'string') error.message = message;
+  else if (Array.isArray(message)) error.message = message.join('\n');
+  else if (!error.response) error.message = 'Cannot reach the server';
+  return error;
+}
+
 api.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     const original = error.config as
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
-    if (error.response?.status !== 401 || !original || original._retry)
-      throw error;
+    const isAuthCall = original?.url?.startsWith('/auth/');
+    if (
+      error.response?.status !== 401 ||
+      !original ||
+      original._retry ||
+      isAuthCall
+    )
+      throw withServerMessage(error);
 
     original._retry = true;
-    refreshing ??= refreshTokens().finally(() => (refreshing = null));
-    if (await refreshing) return api(original);
+    if (await refreshSession()) return api(original);
 
     useAuthStore.getState().logout();
-    throw error;
+    throw withServerMessage(error);
   },
 );
