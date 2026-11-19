@@ -40,6 +40,8 @@ function withServerMessage(error: AxiosError) {
     ?.message;
   if (typeof message === 'string') error.message = message;
   else if (Array.isArray(message)) error.message = message.join('\n');
+  else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')
+    error.message = 'The server took too long to respond. Please try again.';
   else if (!error.response) error.message = 'Cannot reach the server';
   return error;
 }
