@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +17,11 @@ import {
   authService,
   type SocialProvider,
 } from '../../services/api/authService';
+import {
+  clearRememberedEmail,
+  loadRememberedEmail,
+  saveRememberedEmail,
+} from '../../services/sessionStorage';
 import { useAuthStore } from '../../store/authStore';
 import { colors, radius, spacing, typography } from '../../theme';
 import type { AuthSession } from '../../types';
@@ -30,6 +35,13 @@ export function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+
+  // Prefill the last email used with "Remember me" (e.g. after signing out).
+  useEffect(() => {
+    loadRememberedEmail().then(saved => {
+      if (saved) setEmail(current => current || saved);
+    });
+  }, []);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const remembered = useAuthStore(s => s.remember);
@@ -47,6 +59,10 @@ export function LoginScreen() {
     setError(null);
     try {
       setSession(await action(), remember);
+      if (kind === 'email') {
+        if (remember) saveRememberedEmail(email.trim().toLowerCase());
+        else clearRememberedEmail();
+      }
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -156,6 +172,9 @@ export function LoginScreen() {
               autoComplete={
                 mode === 'login' ? 'current-password' : 'new-password'
               }
+              textContentType={mode === 'login' ? 'password' : 'newPassword'}
+              // Lets Google Password Manager / iCloud Keychain save and fill it.
+              importantForAutofill="yes"
             />
             <View style={styles.eye}>
               <IconButton

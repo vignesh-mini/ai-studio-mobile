@@ -32,3 +32,35 @@ export async function clearStoredSession() {
     // Nothing stored.
   }
 }
+
+// The email is kept separately so the login form can be prefilled after sign-out.
+const EMAIL_SERVICE = 'ai-studio.email';
+
+export async function saveRememberedEmail(email: string) {
+  try {
+    await Keychain.setGenericPassword('email', email, {
+      service: EMAIL_SERVICE,
+    });
+  } catch {
+    // Not critical: the form just starts empty.
+  }
+}
+
+export async function loadRememberedEmail(): Promise<string | null> {
+  try {
+    const stored = await Keychain.getGenericPassword({
+      service: EMAIL_SERVICE,
+    });
+    return stored ? stored.password : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearRememberedEmail() {
+  try {
+    await Keychain.resetGenericPassword({ service: EMAIL_SERVICE });
+  } catch {
+    // Nothing stored.
+  }
+}
