@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Alert, Image, Share, StyleSheet, Text, View } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { Button } from '../../components/Button';
@@ -11,6 +12,7 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { colors, radius, spacing, typography } from '../../theme';
 import { aspectRatioValue, errorMessage, timeAgo } from '../../utils';
 import { notify } from '../../utils/notify';
+import { saveToDevice } from '../../utils/saveToDevice';
 
 export function AssetViewerScreen({
   navigation,
@@ -21,6 +23,7 @@ export function AssetViewerScreen({
   );
   const removeAsset = useLibraryStore(s => s.removeAsset);
   const model = useModel(asset?.modelId);
+  const [saving, setSaving] = useState(false);
 
   if (!asset) {
     return (
@@ -98,6 +101,24 @@ export function AssetViewerScreen({
         </Text>
       </View>
 
+      {asset.local ? null : (
+        <Button
+          title="Save to device"
+          icon="download-outline"
+          loading={saving}
+          onPress={async () => {
+            setSaving(true);
+            try {
+              await saveToDevice(asset);
+              notify('Saved to your gallery (AI Studio album)');
+            } catch (error) {
+              notify(`Could not save: ${errorMessage(error)}`);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        />
+      )}
       <Button
         title="Share"
         icon="share-outline"
