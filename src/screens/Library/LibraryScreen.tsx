@@ -5,6 +5,7 @@ import { MediaTile } from '../../components/MediaGrid';
 import { OptionGroup, type Option } from '../../components/OptionGroup';
 import { Screen } from '../../components/Screen';
 import type { TabScreenProps } from '../../navigation/types';
+import { useLibrarySync } from '../../hooks/useLibrarySync';
 import { useLibraryStore } from '../../store/libraryStore';
 import { spacing, typography } from '../../theme';
 import type { AssetType } from '../../types';
@@ -19,6 +20,7 @@ const filters: Option<Filter>[] = [
 
 export function LibraryScreen({ navigation }: TabScreenProps<'Library'>) {
   const assets = useLibraryStore(s => s.assets);
+  const { refetch, isRefetching } = useLibrarySync();
   const [filter, setFilter] = useState<Filter>('all');
   const visible = useMemo(
     () => (filter === 'all' ? assets : assets.filter(a => a.type === filter)),
@@ -32,6 +34,8 @@ export function LibraryScreen({ navigation }: TabScreenProps<'Library'>) {
         keyExtractor={a => a.id}
         numColumns={2}
         contentContainerStyle={styles.content}
+        onRefresh={refetch}
+        refreshing={isRefetching}
         columnWrapperStyle={styles.row}
         ListHeaderComponent={
           <View style={styles.header}>

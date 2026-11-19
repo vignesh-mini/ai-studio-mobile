@@ -9,6 +9,8 @@ import { MediaTile } from '../../components/MediaGrid';
 import { ModelPicker } from '../../components/ModelPicker';
 import { OptionGroup, type Option } from '../../components/OptionGroup';
 import { PromptInput } from '../../components/PromptInput';
+import { env } from '../../config/env';
+import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import { useJob } from '../../hooks/useJob';
 import { useModel } from '../../hooks/useModels';
@@ -103,6 +105,7 @@ export function VideoStudioScreen({
           Text-to-video and image-to-video with Wan 2.2 and more.
         </Text>
       </View>
+      <DemoNotice visible={env.mocks.videos} what="Generated videos" />
 
       <OptionGroup
         label="Mode"

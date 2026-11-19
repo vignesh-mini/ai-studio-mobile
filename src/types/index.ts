@@ -10,6 +10,7 @@ export type ModelCapability =
   | 'long-context'
   | 'documents'
   | 'image-edit'
+  | 'aspect-ratio'
   | 'text-to-video'
   | 'image-to-video'
   | 'transcription'
@@ -87,6 +88,8 @@ export interface GeneratedAsset {
   aspectRatio: AspectRatio;
   durationSec?: number;
   createdAt: string;
+  /** Produced by the offline mock layer; never sent to or deleted on the backend. */
+  local?: boolean;
 }
 
 export interface GenerationJob {

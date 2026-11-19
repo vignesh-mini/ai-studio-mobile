@@ -6,9 +6,11 @@ import { Icon } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
 import { useModel } from '../../hooks/useModels';
 import type { RootScreenProps } from '../../navigation/types';
+import { libraryService } from '../../services/api/mediaService';
 import { useLibraryStore } from '../../store/libraryStore';
 import { colors, radius, spacing, typography } from '../../theme';
-import { aspectRatioValue, timeAgo } from '../../utils';
+import { aspectRatioValue, errorMessage, timeAgo } from '../../utils';
+import { notify } from '../../utils/notify';
 
 export function AssetViewerScreen({
   navigation,
@@ -40,9 +42,14 @@ export function AssetViewerScreen({
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            navigation.goBack();
-            removeAsset(asset.id);
+          onPress: async () => {
+            try {
+              await libraryService.remove(asset);
+              navigation.goBack();
+              removeAsset(asset.id);
+            } catch (error) {
+              notify(`Could not delete: ${errorMessage(error)}`);
+            }
           },
         },
       ],

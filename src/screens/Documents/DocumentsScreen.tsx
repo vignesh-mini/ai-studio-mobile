@@ -12,6 +12,8 @@ import { AppHeader } from '../../components/AppHeader';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
+import { env } from '../../config/env';
+import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import type { RootScreenProps } from '../../navigation/types';
 import {
@@ -78,6 +80,10 @@ export function DocumentsScreen({ navigation }: RootScreenProps<'Documents'>) {
       edges={['top', 'bottom']}
       header={<AppHeader title="Document AI" onBack={navigation.goBack} />}
     >
+      <DemoNotice
+        visible={env.mocks.documents}
+        what="The uploaded file and its summary"
+      />
       <Pressable
         onPress={() => process.mutate(sampleFile)}
         disabled={process.isPending}

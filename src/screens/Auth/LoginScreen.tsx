@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
+import { IconButton } from '../../components/IconButton';
 import {
   authService,
   type SocialProvider,
@@ -29,6 +30,7 @@ export function LoginScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
   // Shown inline: Android can drop Alert dialogs (e.g. while DevTools has focus),
   // which made failed sign-ins look like nothing happened.
@@ -136,23 +138,50 @@ export function LoginScreen() {
             autoComplete="email"
             keyboardType="email-address"
           />
-          <TextInput
-            value={password}
-            onChangeText={v => {
-              setPassword(v);
-              setError(null);
-            }}
-            placeholder="Password"
-            placeholderTextColor={colors.textFaint}
-            style={styles.input}
-            secureTextEntry
-            autoComplete={
-              mode === 'login' ? 'current-password' : 'new-password'
-            }
-          />
+          <View style={styles.passwordRow}>
+            <TextInput
+              value={password}
+              onChangeText={v => {
+                setPassword(v);
+                setError(null);
+              }}
+              placeholder="Password"
+              placeholderTextColor={colors.textFaint}
+              style={[styles.input, styles.passwordInput]}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoComplete={
+                mode === 'login' ? 'current-password' : 'new-password'
+              }
+            />
+            <View style={styles.eye}>
+              <IconButton
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                label={showPassword ? 'Hide password' : 'Show password'}
+                color={colors.textMuted}
+                size={20}
+                onPress={() => setShowPassword(v => !v)}
+              />
+            </View>
+          </View>
           {error ? (
             <View style={styles.error} accessibilityRole="alert">
               <Text style={styles.errorText}>{error}</Text>
+              {mode === 'login' ? (
+                <Text style={styles.errorHint}>
+                  First time here? Tap{' '}
+                  <Text
+                    style={styles.link}
+                    onPress={() => {
+                      setError(null);
+                      setMode('register');
+                    }}
+                  >
+                    Create an account
+                  </Text>{' '}
+                  to register.
+                </Text>
+              ) : null}
             </View>
           ) : null}
           <Button
@@ -220,5 +249,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(248, 113, 113, 0.12)',
   },
   errorText: { color: colors.danger, fontSize: 14 },
+  errorHint: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
+  passwordRow: { justifyContent: 'center' },
+  passwordInput: { paddingRight: 52 },
+  eye: { position: 'absolute', right: spacing.xs },
   link: { color: colors.primary, fontWeight: '600' },
 });

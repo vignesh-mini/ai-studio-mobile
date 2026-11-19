@@ -14,6 +14,7 @@ import { Screen } from '../../components/Screen';
 import type { TabScreenProps } from '../../navigation/types';
 import { useAuthStore } from '../../store/authStore';
 import { useConversationList } from '../../hooks/useConversationSync';
+import { useLibrarySync } from '../../hooks/useLibrarySync';
 import { isListedConversation, useChatStore } from '../../store/chatStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import { colors, radius, spacing, toolColors, typography } from '../../theme';
@@ -35,6 +36,7 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const messages = useChatStore(s => s.messages);
   const setActiveConversation = useChatStore(s => s.setActiveConversation);
   useConversationList();
+  useLibrarySync();
   const [prompt, setPrompt] = useState('');
 
   const recentChats = useMemo(

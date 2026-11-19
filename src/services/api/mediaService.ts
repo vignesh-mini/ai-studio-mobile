@@ -9,15 +9,21 @@ import type {
 } from '../../types';
 import { delay, nowIso, uid } from '../../utils';
 import { mockImageUrl } from '../mock/data';
-import { createMockJob, getMockJob } from '../mock/jobs';
+import { createMockJob, getMockJob, isMockJob } from '../mock/jobs';
 import { api } from './client';
+
+/** The backend returns media paths relative to the API (e.g. /media/<key>). */
+const withAbsoluteUrl = (asset: GeneratedAsset): GeneratedAsset =>
+  asset.url.startsWith('/')
+    ? { ...asset, url: `${env.apiBaseUrl}${asset.url}` }
+    : asset;
 
 // Image and video generation are asynchronous: the API returns a job id immediately
 // and the app polls GET /jobs/:id (or receives a push) instead of holding a request open.
 
 export const imageService = {
   async generate(request: ImageGenerateRequest): Promise<JobCreatedResponse> {
-    if (env.mocks.media) {
+    if (env.mocks.images) {
       await delay(300);
       const jobId = createMockJob('image', 4000 + request.count * 800, () =>
         Array.from({ length: request.count }, (_, i) => ({
@@ -43,7 +49,7 @@ export const imageService = {
   },
 
   async edit(request: ImageEditRequest): Promise<JobCreatedResponse> {
-    if (env.mocks.media) {
+    if (env.mocks.images) {
       await delay(300);
       const jobId = createMockJob('image', 4500, () => [
         {
@@ -69,7 +75,7 @@ export const imageService = {
   },
 
   async enhancePrompt(prompt: string): Promise<string> {
-    if (env.mocks.media) {
+    if (env.mocks.images) {
       await delay(500);
       return `${prompt
         .trim()
@@ -87,7 +93,7 @@ export const imageService = {
 
 export const videoService = {
   async generate(request: VideoGenerateRequest): Promise<JobCreatedResponse> {
-    if (env.mocks.media) {
+    if (env.mocks.videos) {
       await delay(300);
       const jobId = createMockJob('video', 9000, () => [
         {
@@ -117,15 +123,22 @@ export const videoService = {
 
 export const jobService = {
   async get(jobId: string): Promise<GenerationJob> {
-    if (env.mocks.media) return getMockJob(jobId);
+    // Video still runs on the mock layer, so its job ids are resolved locally.
+    if (isMockJob(jobId)) return getMockJob(jobId);
     const { data } = await api.get<GenerationJob>(`/jobs/${jobId}`);
-    return data;
+    return { ...data, assets: data.assets?.map(withAbsoluteUrl) };
   },
 };
 
 export const libraryService = {
   async list(): Promise<GeneratedAsset[]> {
+    if (env.mocks.images) return [];
     const { data } = await api.get<GeneratedAsset[]>('/library');
-    return data;
+    return data.map(withAbsoluteUrl);
+  },
+
+  async remove(asset: GeneratedAsset): Promise<void> {
+    if (asset.local) return;
+    await api.delete(`/library/${asset.id}`);
   },
 };

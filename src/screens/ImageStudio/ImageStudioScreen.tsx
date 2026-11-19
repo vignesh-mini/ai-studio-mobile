@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -8,13 +8,16 @@ import { MediaGrid, MediaTile } from '../../components/MediaGrid';
 import { ModelPicker } from '../../components/ModelPicker';
 import { OptionGroup, type Option } from '../../components/OptionGroup';
 import { PromptInput } from '../../components/PromptInput';
+import { env } from '../../config/env';
+import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import { useJob } from '../../hooks/useJob';
+import { useModel } from '../../hooks/useModels';
 import type { TabScreenProps } from '../../navigation/types';
 import { imageService } from '../../services/api/mediaService';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { spacing, typography } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import type { AspectRatio, ImageGenerateRequest } from '../../types';
 import { errorMessage } from '../../utils';
 
@@ -58,6 +61,15 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
     useState<ImageGenerateRequest['quality']>('standard');
   const [sourceId, setSourceId] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  // Inline, because Android can drop Alert dialogs.
+  const [error, setError] = useState<string | null>(null);
+
+  const selectedModel = useModel(model);
+  // Editing arrives with a backend editing model; until then only mocks offer it.
+  const canEdit = env.mocks.images;
+  const supportsRatio =
+    env.mocks.images || !!selectedModel?.capabilities.includes('aspect-ratio');
+  const effectiveRatio: AspectRatio = supportsRatio ? aspectRatio : '1:1';
 
   const job = useJob(jobId);
   const status = job.data?.status;
@@ -65,7 +77,9 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
 
   const enhance = useMutation({
     mutationFn: imageService.enhancePrompt,
+    onMutate: () => setError(null),
     onSuccess: setPrompt,
+    onError: e => setError(`Could not enhance the prompt: ${errorMessage(e)}`),
   });
   const generate = useMutation({
     mutationFn: () =>
@@ -74,7 +88,7 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
             model,
             prompt: prompt.trim(),
             count,
-            aspectRatio,
+            aspectRatio: effectiveRatio,
             quality,
           })
         : imageService.edit({
@@ -83,9 +97,9 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
             sourceAssetId: sourceId!,
             aspectRatio,
           }),
+    onMutate: () => setError(null),
     onSuccess: response => setJobId(response.jobId),
-    onError: error =>
-      Alert.alert('Could not start generation', errorMessage(error)),
+    onError: e => setError(errorMessage(e)),
   });
 
   const canGenerate =
@@ -96,16 +110,19 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
       <View>
         <Text style={typography.h1}>Image Studio</Text>
         <Text style={typography.muted}>
-          Generate and edit images with FLUX and Stable Diffusion.
+          Turn your ideas into images with FLUX and more.
         </Text>
       </View>
+      <DemoNotice visible={env.mocks.images} what="Generated images" />
 
-      <OptionGroup
-        label="Mode"
-        options={modes}
-        value={mode}
-        onChange={setMode}
-      />
+      {canEdit ? (
+        <OptionGroup
+          label="Mode"
+          options={modes}
+          value={mode}
+          onChange={setMode}
+        />
+      ) : null}
       <ModelPicker
         task="image"
         label="Model"
@@ -161,12 +178,19 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
           onChange={setCount}
         />
       ) : null}
-      <OptionGroup
-        label="Aspect ratio"
-        options={ratios}
-        value={aspectRatio}
-        onChange={setAspectRatio}
-      />
+      {supportsRatio ? (
+        <OptionGroup
+          label="Aspect ratio"
+          options={ratios}
+          value={aspectRatio}
+          onChange={setAspectRatio}
+        />
+      ) : (
+        <Text style={typography.caption}>
+          {selectedModel?.name ?? 'This model'} creates square (1:1) images.
+          Premium models support other aspect ratios.
+        </Text>
+      )}
       {mode === 'create' ? (
         <OptionGroup
           label="Quality"
@@ -190,6 +214,7 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
         onPress={() => generate.mutate()}
       />
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
       {jobId ? <JobProgress job={job.data} /> : null}
 
       {job.data?.assets?.length ? (
@@ -216,6 +241,7 @@ export function ImageStudioScreen({ navigation }: TabScreenProps<'Images'>) {
 
 const styles = StyleSheet.create({
   group: { gap: spacing.sm },
+  error: { color: colors.danger, fontSize: 14 },
   sources: { gap: spacing.sm },
   source: { width: 96 },
 });

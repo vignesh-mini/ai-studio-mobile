@@ -12,6 +12,7 @@ import { SubscriptionScreen } from '../screens/Subscription/SubscriptionScreen';
 import { VoiceScreen } from '../screens/Voice/VoiceScreen';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore } from '../store/chatStore';
+import { useLibraryStore } from '../store/libraryStore';
 import { colors } from '../theme';
 import { delay } from '../utils';
 import { MainTabs } from './MainTabs';
@@ -34,6 +35,7 @@ export function RootNavigator() {
   useEffect(() => {
     if (!isSignedIn) {
       useChatStore.getState().reset();
+      useLibraryStore.getState().reset();
       queryClient.clear();
     }
   }, [isSignedIn, queryClient]);

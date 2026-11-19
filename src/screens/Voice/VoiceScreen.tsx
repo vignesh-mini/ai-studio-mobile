@@ -13,6 +13,8 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
 import { MarkdownText } from '../../components/MarkdownText';
+import { env } from '../../config/env';
+import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import type { RootScreenProps } from '../../navigation/types';
 import { voiceService } from '../../services/api/voiceService';
@@ -135,6 +137,10 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
       edges={['top', 'bottom']}
       header={<AppHeader title="Voice AI" onBack={navigation.goBack} />}
     >
+      <DemoNotice
+        visible={env.mocks.voice}
+        what="Recording and transcription"
+      />
       <View style={styles.micArea}>
         <Animated.View
           style={[

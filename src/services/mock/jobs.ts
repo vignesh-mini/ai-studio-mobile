@@ -22,6 +22,8 @@ export function createMockJob(
   return jobId;
 }
 
+export const isMockJob = (jobId: string) => jobs.has(jobId);
+
 export function getMockJob(jobId: string): GenerationJob {
   const job = jobs.get(jobId);
   if (!job) {
@@ -39,7 +41,7 @@ export function getMockJob(jobId: string): GenerationJob {
   if (progress < 1)
     return { jobId, type: job.type, status: 'processing', progress };
 
-  job.assets ??= job.buildAssets();
+  job.assets ??= job.buildAssets().map(a => ({ ...a, local: true }));
   return {
     jobId,
     type: job.type,
