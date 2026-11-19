@@ -16,3 +16,11 @@ jest.mock('@react-native-camera-roll/camera-roll', () => ({
   CameraRoll: { saveAsset: jest.fn() },
 }));
 jest.mock('react-native-video', () => 'Video');
+jest.mock('react-native-keychain', () => ({
+  ACCESSIBLE: {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'AccessibleWhenUnlockedThisDeviceOnly',
+  },
+  setGenericPassword: jest.fn(() => Promise.resolve(true)),
+  getGenericPassword: jest.fn(() => Promise.resolve(false)),
+  resetGenericPassword: jest.fn(() => Promise.resolve(true)),
+}));

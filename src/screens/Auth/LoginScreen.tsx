@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { IconButton } from '../../components/IconButton';
 import {
   authService,
@@ -31,6 +32,8 @@ export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const remembered = useAuthStore(s => s.remember);
+  const [remember, setRemember] = useState(remembered);
   const [pending, setPending] = useState<Pending>(null);
   // Shown inline: Android can drop Alert dialogs (e.g. while DevTools has focus),
   // which made failed sign-ins look like nothing happened.
@@ -43,7 +46,7 @@ export function LoginScreen() {
     setPending(kind);
     setError(null);
     try {
-      setSession(await action());
+      setSession(await action(), remember);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -164,6 +167,20 @@ export function LoginScreen() {
               />
             </View>
           </View>
+          <Pressable
+            onPress={() => setRemember(v => !v)}
+            style={styles.remember}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: remember }}
+            hitSlop={8}
+          >
+            <Icon
+              name={remember ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={remember ? colors.primary : colors.textMuted}
+            />
+            <Text style={typography.muted}>Remember me</Text>
+          </Pressable>
           {error ? (
             <View style={styles.error} accessibilityRole="alert">
               <Text style={styles.errorText}>{error}</Text>
@@ -251,6 +268,12 @@ const styles = StyleSheet.create({
   errorText: { color: colors.danger, fontSize: 14 },
   errorHint: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
   passwordRow: { justifyContent: 'center' },
+  remember: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    alignSelf: 'flex-start',
+  },
   passwordInput: { paddingRight: 52 },
   eye: { position: 'absolute', right: spacing.xs },
   link: { color: colors.primary, fontWeight: '600' },

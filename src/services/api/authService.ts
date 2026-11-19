@@ -45,6 +45,14 @@ export const authService = {
     return data;
   },
 
+  /** Exchanges a stored refresh token for a new session (used by "Remember me"). */
+  async restore(refreshToken: string): Promise<AuthSession> {
+    const { data } = await api.post<AuthSession>('/auth/refresh', {
+      refreshToken,
+    });
+    return data;
+  },
+
   /**
    * Social sign-in: the native SDK (Firebase / Supabase) returns an ID token, which the
    * backend verifies and exchanges for our own JWT pair.

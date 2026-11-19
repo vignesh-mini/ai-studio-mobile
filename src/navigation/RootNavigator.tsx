@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
+import { env } from '../config/env';
 import { AssetViewerScreen } from '../screens/Library/AssetViewerScreen';
 import { CompareScreen } from '../screens/Compare/CompareScreen';
 import { DocumentsScreen } from '../screens/Documents/DocumentsScreen';
@@ -10,6 +12,11 @@ import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { SplashScreen } from '../screens/Splash/SplashScreen';
 import { SubscriptionScreen } from '../screens/Subscription/SubscriptionScreen';
 import { VoiceScreen } from '../screens/Voice/VoiceScreen';
+import { authService } from '../services/api/authService';
+import {
+  clearStoredSession,
+  loadRefreshToken,
+} from '../services/sessionStorage';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore } from '../store/chatStore';
 import { useLibraryStore } from '../store/libraryStore';
@@ -20,13 +27,32 @@ import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/** "Remember me": signs back in with the refresh token kept in secure storage. */
+async function restoreSession() {
+  const minimumSplash = delay(600);
+  const token = env.mocks.auth ? null : await loadRefreshToken();
+  if (token) {
+    try {
+      useAuthStore
+        .getState()
+        .setSession(await authService.restore(token), true);
+    } catch (error) {
+      // Only a rejected token is discarded; if the server is unreachable, keep it so
+      // the next launch can try again.
+      if (isAxiosError(error) && error.response?.status === 401) {
+        await clearStoredSession();
+      }
+    }
+  }
+  await minimumSplash;
+}
+
 export function RootNavigator() {
   const isSignedIn = useAuthStore(s => !!s.user);
   const [booting, setBooting] = useState(true);
 
-  // Restore the stored session here (keychain + GET /profile) once real auth exists.
   useEffect(() => {
-    delay(1200).then(() => setBooting(false));
+    restoreSession().finally(() => setBooting(false));
   }, []);
 
   // Signing out (or an expired session) must not leave the previous user's chats or
