@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Pressable,
@@ -18,10 +19,12 @@ import { Screen } from '../../components/Screen';
 import { useChatSession } from '../../hooks/useChatSession';
 import { useConversationMessages } from '../../hooks/useConversationSync';
 import type { TabScreenProps } from '../../navigation/types';
+import { chatService } from '../../services/api/chatService';
 import { useChatStore } from '../../store/chatStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { colors, radius, spacing, typography } from '../../theme';
 import type { ChatMessage } from '../../types';
+import { errorMessage } from '../../utils';
 import { notify } from '../../utils/notify';
 import { ChatComposer } from './ChatComposer';
 import { MessageBubble } from './MessageBubble';
@@ -100,6 +103,33 @@ export function ChatScreen({ navigation, route }: TabScreenProps<'Chat'>) {
     if (messages.length > 0) createConversation(defaultModel);
   };
 
+  const clearChat = () => {
+    if (!activeId) return;
+    Alert.alert(
+      'Clear this chat?',
+      'All messages in this conversation will be deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            session.stop();
+            try {
+              await chatService.deleteConversation(activeId);
+            } catch (error) {
+              notify(`Could not clear: ${errorMessage(error)}`);
+              return;
+            }
+            setEditing(null);
+            useChatStore.getState().deleteConversation(activeId);
+            createConversation(conversation?.modelId ?? defaultModel);
+          },
+        },
+      ],
+    );
+  };
+
   const exportChat = () => {
     const transcript = messages
       .filter(m => m.kind !== 'event')
@@ -165,6 +195,18 @@ export function ChatScreen({ navigation, route }: TabScreenProps<'Chat'>) {
           <Pressable onPress={exportChat} style={styles.linkRow} hitSlop={8}>
             <Icon name="download-outline" size={14} color={colors.textMuted} />
             <Text style={typography.caption}>Export</Text>
+          </Pressable>
+        ) : null}
+        {messages.length ? (
+          <Pressable
+            onPress={clearChat}
+            style={styles.linkRow}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Clear this chat"
+          >
+            <Icon name="trash-outline" size={14} color={colors.textMuted} />
+            <Text style={typography.caption}>Clear</Text>
           </Pressable>
         ) : null}
       </View>

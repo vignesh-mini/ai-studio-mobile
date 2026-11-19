@@ -11,6 +11,7 @@ import { AppHeader } from '../../components/AppHeader';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Icon } from '../../components/Icon';
+import { IconButton } from '../../components/IconButton';
 import { Screen } from '../../components/Screen';
 import { useConversationList } from '../../hooks/useConversationSync';
 import { useModels } from '../../hooks/useModels';
@@ -47,6 +48,28 @@ export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
       params: { conversationId: id },
     });
 
+  const confirmClearAll = () =>
+    Alert.alert(
+      'Clear all chats?',
+      'Every conversation and message will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear all',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await chatService.deleteAllConversations();
+              useChatStore.getState().reset();
+              setQuery('');
+            } catch (error) {
+              Alert.alert('Could not clear chats', errorMessage(error));
+            }
+          },
+        },
+      ],
+    );
+
   const confirmDelete = (id: string, title: string) =>
     Alert.alert('Delete conversation?', title, [
       { text: 'Cancel', style: 'cancel' },
@@ -67,7 +90,22 @@ export function HistoryScreen({ navigation }: RootScreenProps<'History'>) {
   return (
     <Screen
       edges={['top', 'bottom']}
-      header={<AppHeader title="History" onBack={navigation.goBack} />}
+      header={
+        <AppHeader
+          title="History"
+          onBack={navigation.goBack}
+          right={
+            items.length ? (
+              <IconButton
+                name="trash-outline"
+                label="Clear all chats"
+                color={colors.danger}
+                onPress={confirmClearAll}
+              />
+            ) : null
+          }
+        />
+      }
     >
       <FlatList
         data={items}

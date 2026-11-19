@@ -1,5 +1,6 @@
 import { env } from '../../config/env';
 import type { ChatMessage, Conversation } from '../../types';
+import { isAxiosError } from 'axios';
 import { api } from './client';
 
 // Sending messages goes through ../chatStream.ts (SSE); this covers saved history.
@@ -21,6 +22,17 @@ export const chatService = {
 
   async deleteConversation(conversationId: string): Promise<void> {
     if (env.mocks.chat) return;
-    await api.delete(`/chat/conversations/${conversationId}`);
+    try {
+      await api.delete(`/chat/conversations/${conversationId}`);
+    } catch (error) {
+      // A chat that never reached the server (e.g. the reply failed) has nothing
+      // to delete there.
+      if (!isAxiosError(error) || error.response?.status !== 404) throw error;
+    }
+  },
+
+  async deleteAllConversations(): Promise<void> {
+    if (env.mocks.chat) return;
+    await api.delete('/chat/conversations');
   },
 };
