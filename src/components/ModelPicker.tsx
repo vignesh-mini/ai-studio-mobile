@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useModel, useModels } from '../hooks/useModels';
 import { useAuthStore } from '../store/authStore';
 import { colors, radius, spacing, typography } from '../theme';
-import type { AIModel, AITask } from '../types';
+import { accessTier, type AIModel, type AITask } from '../types';
 import { Icon } from './Icon';
 
 interface ModelPickerProps {
@@ -93,7 +93,7 @@ export function ModelSheet({
   onSelect,
 }: ModelSheetProps) {
   const { data: models, isLoading } = useModels(task);
-  const plan = useAuthStore(s => s.user?.plan ?? 'free');
+  const plan = useAuthStore(s => accessTier(s.user));
   const insets = useSafeAreaInsets();
 
   const choose = (model: AIModel) => {

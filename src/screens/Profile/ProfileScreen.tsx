@@ -69,9 +69,17 @@ export function ProfileScreen({ navigation }: RootScreenProps<'Profile'>) {
           <Text style={typography.muted}>{user?.email}</Text>
         </View>
         <Text
-          style={[styles.plan, user?.plan === 'premium' && styles.planPremium]}
+          style={[
+            styles.plan,
+            (user?.role === 'owner' || user?.plan === 'premium') &&
+              styles.planPremium,
+          ]}
         >
-          {user?.plan === 'premium' ? 'PREMIUM' : 'FREE'}
+          {user?.role === 'owner'
+            ? 'OWNER'
+            : user?.plan === 'premium'
+            ? 'PREMIUM'
+            : 'FREE'}
         </Text>
       </View>
 
@@ -172,10 +180,14 @@ function Meter({
       <View style={styles.meterRow}>
         <Text style={typography.body}>{label}</Text>
         <Text style={typography.caption}>
-          {meter.used} / {meter.limit}
+          {meter.limit === null
+            ? `${meter.used} · Unlimited`
+            : `${meter.used} / ${meter.limit}`}
         </Text>
       </View>
-      <ProgressBar value={meter.used / meter.limit} color={color} />
+      {meter.limit === null ? null : (
+        <ProgressBar value={meter.used / meter.limit} color={color} />
+      )}
     </View>
   );
 }

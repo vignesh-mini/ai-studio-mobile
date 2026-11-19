@@ -32,8 +32,14 @@ export interface User {
   name: string;
   email: string;
   plan: PlanTier;
+  /** `owner` accounts have no usage limits and can use every model. */
+  role?: 'user' | 'owner';
   avatarUrl?: string;
 }
+
+/** The tier that decides model access: owners count as premium. */
+export const accessTier = (user?: User | null): PlanTier =>
+  user?.role === 'owner' ? 'premium' : user?.plan ?? 'free';
 
 export interface AuthSession {
   user: User;
@@ -149,7 +155,8 @@ export interface DocumentAnalysis {
 
 export interface UsageMeter {
   used: number;
-  limit: number;
+  /** null = unlimited (owner accounts). */
+  limit: number | null;
 }
 
 export interface Usage {
