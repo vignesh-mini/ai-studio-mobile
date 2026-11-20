@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
  * The deployed backend used by release builds (the APK you install on a phone).
  * Replace with your Render service URL after the first deploy.
  */
-const PRODUCTION_API_URL = 'https://ai-studio-backend.onrender.com/api/v1';
+const PRODUCTION_API_URL = 'https://ai-studio-backend-xf1h.onrender.com/api/v1';
 
 // Development builds talk to the backend on this PC; the Android emulator reaches the
 // host machine through 10.0.2.2.
