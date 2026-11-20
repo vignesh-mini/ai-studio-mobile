@@ -60,7 +60,7 @@ export const mockModels: AIModel[] = [
   },
   {
     id: 'openrouter-llama-free',
-    name: 'Llama 3.3 70B (free)',
+    name: 'Nemotron 3 Ultra (free)',
     provider: 'OpenRouter',
     task: 'chat',
     description: 'Free community model served through OpenRouter.',
