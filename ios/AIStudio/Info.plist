@@ -34,6 +34,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AI Studio uses the microphone so you can ask questions by voice.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>AI Studio saves the images and videos you generate to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

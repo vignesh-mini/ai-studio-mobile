@@ -24,3 +24,20 @@ jest.mock('react-native-keychain', () => ({
   getGenericPassword: jest.fn(() => Promise.resolve(false)),
   resetGenericPassword: jest.fn(() => Promise.resolve(true)),
 }));
+jest.mock('react-native-nitro-sound', () => ({
+  __esModule: true,
+  default: {
+    startRecorder: jest.fn(() => Promise.resolve('file:///tmp/sound.mp4')),
+    stopRecorder: jest.fn(() => Promise.resolve('file:///tmp/sound.mp4')),
+    startPlayer: jest.fn(() => Promise.resolve('')),
+    stopPlayer: jest.fn(() => Promise.resolve('')),
+    addPlaybackEndListener: jest.fn(),
+    removePlaybackEndListener: jest.fn(),
+  },
+}));
+jest.mock('@react-native-documents/picker', () => ({
+  pick: jest.fn(),
+  isErrorWithCode: jest.fn(() => false),
+  errorCodes: { OPERATION_CANCELED: 'OPERATION_CANCELED' },
+  types: { pdf: 'application/pdf', plainText: 'text/plain' },
+}));

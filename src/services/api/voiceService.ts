@@ -1,5 +1,6 @@
 import { env } from '../../config/env';
 import { delay } from '../../utils';
+import type { Recording } from '../audio';
 import { api } from './client';
 
 const sampleQuestions = [
@@ -9,8 +10,8 @@ const sampleQuestions = [
 ];
 
 export const voiceService = {
-  /** Uploads a recorded audio clip; the backend transcribes it with Whisper. */
-  async transcribe(audioUri: string): Promise<string> {
+  /** Uploads a recorded clip; the backend transcribes it with Whisper. */
+  async transcribe(recording: Recording): Promise<string> {
     if (env.mocks.voice) {
       await delay(900);
       return sampleQuestions[
@@ -19,26 +20,31 @@ export const voiceService = {
     }
     const form = new FormData();
     form.append('audio', {
-      uri: audioUri,
-      name: 'speech.m4a',
-      type: 'audio/m4a',
+      uri: recording.uri,
+      name: recording.name,
+      type: recording.mimeType,
     } as unknown as Blob);
     const { data } = await api.post<{ text: string }>(
       '/audio/transcribe',
       form,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60_000,
       },
     );
     return data.text;
   },
 
-  /** Returns a signed URL for synthesized speech of `text`. */
+  /** Returns a short-lived URL of `text` read aloud. */
   async synthesize(text: string): Promise<string | null> {
     if (env.mocks.voice) return null;
-    const { data } = await api.post<{ audioUrl: string }>('/audio/speech', {
-      text,
-    });
-    return data.audioUrl;
+    const { data } = await api.post<{ audioUrl: string }>(
+      '/audio/speech',
+      { text },
+      { timeout: 60_000 },
+    );
+    return data.audioUrl.startsWith('/')
+      ? `${env.apiBaseUrl}${data.audioUrl}`
+      : data.audioUrl;
   },
 };

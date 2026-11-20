@@ -13,10 +13,16 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
 import { MarkdownText } from '../../components/MarkdownText';
-import { env } from '../../config/env';
-import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import type { RootScreenProps } from '../../navigation/types';
+import {
+  cancelRecording,
+  playUrl,
+  requestMicrophone,
+  startRecording,
+  stopPlayback,
+  stopRecording,
+} from '../../services/audio';
 import { voiceService } from '../../services/api/voiceService';
 import { streamChat } from '../../services/chatStream';
 import { useChatStore } from '../../store/chatStore';
@@ -24,13 +30,14 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { colors, spacing, toolColors, typography } from '../../theme';
 import { errorMessage, uid } from '../../utils';
 
-type Phase = 'idle' | 'listening' | 'transcribing' | 'thinking';
+type Phase = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking';
 
 const phaseLabel: Record<Phase, string> = {
   idle: 'Tap to speak',
   listening: 'Listening… tap to stop',
   transcribing: 'Transcribing',
   thinking: 'Thinking',
+  speaking: 'Speaking… tap to stop',
 };
 
 export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
@@ -43,6 +50,7 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
   const [transcript, setTranscript] = useState('');
   const [reply, setReply] = useState('');
   const [answeredBy, setAnsweredBy] = useState(modelId);
+  const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
   const pulse = useRef(new Animated.Value(0)).current;
 
@@ -62,22 +70,67 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
     ).start();
   }, [phase, pulse]);
 
-  useEffect(() => () => cancelRef.current?.(), []);
+  useEffect(
+    () => () => {
+      cancelRef.current?.();
+      cancelRecording();
+      stopPlayback();
+    },
+    [],
+  );
 
-  // Phase 1 simulates recording. Phase 6 records with an audio module, uploads the clip
-  // to POST /audio/transcribe (Whisper) and plays POST /audio/speech for replies.
+  const speak = async (text: string) => {
+    setPhase('speaking');
+    try {
+      const url = await voiceService.synthesize(text);
+      if (url) await playUrl(url);
+    } catch (e) {
+      setError(`Could not read the reply aloud: ${errorMessage(e)}`);
+    } finally {
+      setPhase('idle');
+    }
+  };
+
+  // Records with the device microphone, sends the clip to POST /audio/transcribe
+  // (Whisper), streams the answer like chat and reads it aloud via POST /audio/speech.
   const toggleMic = async () => {
+    if (phase === 'speaking') {
+      await stopPlayback();
+      setPhase('idle');
+      return;
+    }
     if (phase === 'idle') {
-      setTranscript('');
-      setReply('');
-      setPhase('listening');
+      setError(null);
+      if (!(await requestMicrophone())) {
+        setError('Microphone access is needed. Allow it in system settings.');
+        return;
+      }
+      try {
+        await startRecording();
+        setTranscript('');
+        setReply('');
+        setPhase('listening');
+      } catch (e) {
+        setError(`Could not start recording: ${errorMessage(e)}`);
+      }
       return;
     }
     if (phase !== 'listening') return;
 
     setPhase('transcribing');
     try {
-      const text = await voiceService.transcribe('mock://recording.m4a');
+      const recording = await stopRecording();
+      if (recording.durationMs < 700) {
+        setError('That was too short. Tap, ask your question, then tap again.');
+        setPhase('idle');
+        return;
+      }
+      const text = await voiceService.transcribe(recording);
+      if (!text) {
+        setError("I didn't catch that. Please try again.");
+        setPhase('idle');
+        return;
+      }
       setTranscript(text);
       setPhase('thinking');
       let full = '';
@@ -93,18 +146,18 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
           },
           onDone: ({ modelId: resolved }) => {
             setAnsweredBy(resolved);
-            setPhase('idle');
             cancelRef.current = null;
-            if (autoSpeak) voiceService.synthesize(full);
+            if (autoSpeak && full.trim()) speak(full);
+            else setPhase('idle');
           },
-          onError: error => {
-            setReply(error.message);
+          onError: e => {
+            setError(e.message);
             setPhase('idle');
           },
         },
       );
-    } catch (error) {
-      setReply(errorMessage(error));
+    } catch (e) {
+      setError(errorMessage(e));
       setPhase('idle');
     }
   };
@@ -137,10 +190,6 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
       edges={['top', 'bottom']}
       header={<AppHeader title="Voice AI" onBack={navigation.goBack} />}
     >
-      <DemoNotice
-        visible={env.mocks.voice}
-        what="Recording and transcription"
-      />
       <View style={styles.micArea}>
         <Animated.View
           style={[
@@ -150,24 +199,34 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
         />
         <Pressable
           onPress={toggleMic}
-          style={[styles.mic, phase === 'listening' && styles.micActive]}
+          style={[
+            styles.mic,
+            (phase === 'listening' || phase === 'speaking') && styles.micActive,
+          ]}
           accessibilityRole="button"
           accessibilityLabel={phaseLabel[phase]}
         >
           <Icon
-            name={phase === 'listening' ? 'stop' : 'mic'}
+            name={
+              phase === 'listening' || phase === 'speaking' ? 'stop' : 'mic'
+            }
             size={40}
             color={colors.white}
           />
         </Pressable>
         <Text style={typography.h3}>{phaseLabel[phase]}</Text>
+        {error ? (
+          <Text style={styles.error} accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.toggleRow}>
         <View style={styles.flex}>
           <Text style={typography.body}>Speak replies aloud</Text>
           <Text style={typography.caption}>
-            Uses the backend text-to-speech endpoint
+            Plays each answer with a natural voice
           </Text>
         </View>
         <Switch
@@ -190,12 +249,20 @@ export function VoiceScreen({ navigation }: RootScreenProps<'Voice'>) {
         </Card>
       ) : null}
       {reply && phase === 'idle' ? (
-        <Button
-          title="Continue in chat"
-          icon="chatbubbles-outline"
-          variant="secondary"
-          onPress={continueInChat}
-        />
+        <>
+          <Button
+            title="Read aloud"
+            icon="volume-high-outline"
+            variant="secondary"
+            onPress={() => speak(reply)}
+          />
+          <Button
+            title="Continue in chat"
+            icon="chatbubbles-outline"
+            variant="secondary"
+            onPress={continueInChat}
+          />
+        </>
       ) : null}
     </Screen>
   );
@@ -227,5 +294,6 @@ const styles = StyleSheet.create({
     backgroundColor: toolColors.voice,
   },
   micActive: { backgroundColor: colors.danger },
+  error: { color: colors.danger, fontSize: 14, textAlign: 'center' },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
 });

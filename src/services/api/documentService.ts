@@ -33,6 +33,7 @@ export const documentService = {
     } as unknown as Blob);
     const { data } = await api.post<UploadedFile>('/files/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120_000,
     });
     return data;
   },
@@ -54,8 +55,11 @@ export const documentService = {
         ],
       };
     }
+    // Summarising a long document can take a minute when providers are busy.
     const { data } = await api.post<DocumentAnalysis>(
       `/documents/${file.fileId}/analyze`,
+      undefined,
+      { timeout: 120_000 },
     );
     return data;
   },
@@ -68,6 +72,7 @@ export const documentService = {
     const { data } = await api.post<{ answer: string }>(
       `/documents/${fileId}/ask`,
       { question },
+      { timeout: 120_000 },
     );
     return data.answer;
   },
