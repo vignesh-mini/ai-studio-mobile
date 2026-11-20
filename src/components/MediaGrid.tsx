@@ -17,6 +17,9 @@ export function MediaTile({
   selected,
   square,
 }: MediaTileProps) {
+  const shape = {
+    aspectRatio: square ? 1 : aspectRatioValue(asset.aspectRatio),
+  };
   return (
     <Pressable
       onPress={onPress}
@@ -25,13 +28,17 @@ export function MediaTile({
       accessibilityLabel={asset.prompt}
       style={[styles.tile, selected && styles.selected]}
     >
-      <Image
-        source={{ uri: asset.thumbnailUrl ?? asset.url }}
-        style={[
-          styles.image,
-          { aspectRatio: square ? 1 : aspectRatioValue(asset.aspectRatio) },
-        ]}
-      />
+      {asset.type === 'video' && !asset.thumbnailUrl ? (
+        // Generated videos have no poster frame, and Image cannot decode an mp4.
+        <View style={[styles.image, styles.videoPlaceholder, shape]}>
+          <Icon name="film-outline" size={28} color={colors.textMuted} />
+        </View>
+      ) : (
+        <Image
+          source={{ uri: asset.thumbnailUrl ?? asset.url }}
+          style={[styles.image, shape]}
+        />
+      )}
       {asset.type === 'video' ? (
         <View style={styles.videoBadge}>
           <Icon name="play" size={12} color={colors.white} />
@@ -84,6 +91,11 @@ const styles = StyleSheet.create({
   },
   selected: { borderColor: colors.primary },
   image: { width: '100%' },
+  videoPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+  },
   videoBadge: {
     position: 'absolute',
     left: spacing.sm,

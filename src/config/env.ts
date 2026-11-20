@@ -24,7 +24,7 @@ export const env = {
     chat: false,
     account: false,
     images: false,
-    videos: true,
+    videos: false,
     documents: true,
     voice: true,
   },

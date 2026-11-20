@@ -9,17 +9,16 @@ import { MediaTile } from '../../components/MediaGrid';
 import { ModelPicker } from '../../components/ModelPicker';
 import { OptionGroup, type Option } from '../../components/OptionGroup';
 import { PromptInput } from '../../components/PromptInput';
-import { env } from '../../config/env';
-import { DemoNotice } from '../../components/DemoNotice';
 import { Screen } from '../../components/Screen';
 import { useJob } from '../../hooks/useJob';
 import { useModel } from '../../hooks/useModels';
 import type { TabScreenProps } from '../../navigation/types';
 import { imageService, videoService } from '../../services/api/mediaService';
+import { useAuthStore } from '../../store/authStore';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { spacing, typography } from '../../theme';
-import type { AspectRatio, VideoMode } from '../../types';
+import { colors, radius, spacing, typography } from '../../theme';
+import { accessTier, type AspectRatio, type VideoMode } from '../../types';
 import { errorMessage } from '../../utils';
 
 const modes: Option<VideoMode>[] = [
@@ -44,6 +43,10 @@ export function VideoStudioScreen({
   const modelId = useSettingsStore(s => s.videoModel);
   const setModel = useSettingsStore(s => s.setVideoModel);
   const model = useModel(modelId);
+  const plan = useAuthStore(s => accessTier(s.user));
+  // Video has no free API, so its models are pay-per-use and Premium only.
+  const locked = model?.tier === 'premium' && plan === 'free';
+  const unavailable = !!model && !model.available;
   const assets = useLibraryStore(s => s.assets);
   const sources = useMemo(
     () => assets.filter(a => a.type === 'image'),
@@ -92,6 +95,8 @@ export function VideoStudioScreen({
   });
 
   const canGenerate =
+    !locked &&
+    !unavailable &&
     supportsMode &&
     !running &&
     prompt.trim().length > 2 &&
@@ -105,7 +110,15 @@ export function VideoStudioScreen({
           Text-to-video and image-to-video with Wan 2.2 and more.
         </Text>
       </View>
-      <DemoNotice visible={env.mocks.videos} what="Generated videos" />
+      {locked || unavailable ? (
+        <View style={styles.notice} accessibilityRole="text">
+          <Text style={styles.noticeText}>
+            {locked
+              ? 'Video generation is a Premium feature: every clip is paid for with provider credit.'
+              : `${model?.name} is a paid model and is not switched on yet. It becomes available once a fal.ai key with credit is added on the server.`}
+          </Text>
+        </View>
+      ) : null}
 
       <OptionGroup
         label="Mode"
@@ -175,8 +188,7 @@ export function VideoStudioScreen({
         onPress={() => generate.mutate()}
       />
       <Text style={typography.caption}>
-        Video runs as a background job and usually takes a few minutes on real
-        GPUs.
+        Video runs as a background job and usually takes one to a few minutes.
       </Text>
 
       {jobId ? <JobProgress job={job.data} /> : null}
@@ -212,6 +224,14 @@ export function VideoStudioScreen({
 
 const styles = StyleSheet.create({
   group: { gap: spacing.sm },
+  notice: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.35)',
+    backgroundColor: 'rgba(251, 191, 36, 0.08)',
+  },
+  noticeText: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
   sources: { gap: spacing.sm },
   source: { width: 96 },
 });

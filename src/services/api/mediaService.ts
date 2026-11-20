@@ -123,7 +123,7 @@ export const videoService = {
 
 export const jobService = {
   async get(jobId: string): Promise<GenerationJob> {
-    // Video still runs on the mock layer, so its job ids are resolved locally.
+    // Jobs created while a feature runs on the mock layer are resolved locally.
     if (isMockJob(jobId)) return getMockJob(jobId);
     const { data } = await api.get<GenerationJob>(`/jobs/${jobId}`);
     return { ...data, assets: data.assets?.map(withAbsoluteUrl) };
