@@ -1,17 +1,16 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Icon } from '../../components/Icon';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
+
+const logo = require('../../assets/logo.png');
 
 export function Logo({ size = 72 }: { size?: number }) {
   return (
-    <View
-      style={[
-        styles.logo,
-        { width: size, height: size, borderRadius: size / 3.6 },
-      ]}
-    >
-      <Icon name="sparkles" size={size * 0.5} color={colors.white} />
-    </View>
+    <Image
+      source={logo}
+      style={[styles.logo, { width: size, height: size }]}
+      accessibilityIgnoresInvertColors
+      accessible={false}
+    />
   );
 }
 
@@ -36,11 +35,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     backgroundColor: colors.background,
   },
-  logo: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    marginBottom: spacing.sm,
-  },
+  logo: { marginBottom: spacing.sm },
   spinner: { marginTop: spacing.xl },
 });
