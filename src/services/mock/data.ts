@@ -95,7 +95,7 @@ export const mockModels: AIModel[] = [
     task: 'image',
     description: 'Fast, photorealistic text-to-image.',
     tier: 'free',
-    capabilities: ['image-edit'],
+    capabilities: ['aspect-ratio'],
     available: true,
   },
   {
@@ -105,7 +105,7 @@ export const mockModels: AIModel[] = [
     task: 'image',
     description: 'Higher detail and prompt adherence.',
     tier: 'premium',
-    capabilities: ['image-edit'],
+    capabilities: ['aspect-ratio'],
     available: true,
   },
   {
@@ -115,7 +115,17 @@ export const mockModels: AIModel[] = [
     task: 'image',
     description: 'Versatile styles, image-to-image variations.',
     tier: 'free',
-    capabilities: ['image-edit'],
+    capabilities: ['aspect-ratio'],
+    available: true,
+  },
+  {
+    id: 'flux-2-klein',
+    name: 'FLUX.2 klein',
+    provider: 'Cloudflare Workers AI',
+    task: 'image',
+    description: 'Fast photo edits that follow your instruction.',
+    tier: 'free',
+    capabilities: ['edit'],
     available: true,
   },
   {

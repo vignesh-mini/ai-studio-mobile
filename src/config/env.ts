@@ -30,5 +30,6 @@ export const env = {
   },
   defaultChatModel: 'auto',
   defaultImageModel: 'flux-schnell',
+  defaultEditModel: 'flux-2-klein',
   defaultVideoModel: 'wan-2.2',
 };

@@ -56,21 +56,35 @@ export const imageService = {
           id: uid('asset'),
           type: 'image',
           url: mockImageUrl(
-            `${request.sourceAssetId}-${request.prompt}`,
-            request.aspectRatio,
+            `${request.sourceAssetId ?? request.photo?.name}-${request.prompt}`,
+            '1:1',
           ),
           prompt: request.prompt,
           modelId: request.model,
-          aspectRatio: request.aspectRatio,
+          aspectRatio: '1:1',
           createdAt: nowIso(),
         },
       ]);
       return { jobId, status: 'queued' };
     }
-    const { data } = await api.post<JobCreatedResponse>(
-      '/images/edit',
-      request,
-    );
+    const form = new FormData();
+    form.append('model', request.model);
+    form.append('prompt', request.prompt);
+    form.append('count', String(request.count));
+    if (request.photo) {
+      form.append('image', {
+        uri: request.photo.uri,
+        name: request.photo.name,
+        type: request.photo.mimeType,
+      } as unknown as Blob);
+    } else if (request.sourceAssetId) {
+      form.append('sourceAssetId', request.sourceAssetId);
+    }
+    // Phone photos can be several MB, so the upload gets more time than other calls.
+    const { data } = await api.post<JobCreatedResponse>('/images/edit', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120_000,
+    });
     return data;
   },
 

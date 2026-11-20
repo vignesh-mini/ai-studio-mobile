@@ -9,7 +9,8 @@ export type ModelCapability =
   | 'fast'
   | 'long-context'
   | 'documents'
-  | 'image-edit'
+  | 'edit'
+  | 'paid'
   | 'aspect-ratio'
   | 'text-to-video'
   | 'image-to-video'
@@ -120,11 +121,21 @@ export interface ImageGenerateRequest {
   quality: 'standard' | 'high';
 }
 
+/** A photo picked on the device, before upload. */
+export interface PickedPhoto {
+  uri: string;
+  name: string;
+  mimeType: string;
+  size: number;
+}
+
+/** Edits either a library image (sourceAssetId) or a photo from the device. */
 export interface ImageEditRequest {
   model: string;
   prompt: string;
-  sourceAssetId: string;
-  aspectRatio: AspectRatio;
+  count: 1 | 2 | 4;
+  sourceAssetId?: string;
+  photo?: PickedPhoto;
 }
 
 export type VideoMode = 'text-to-video' | 'image-to-video';

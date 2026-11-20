@@ -23,6 +23,8 @@ interface ModelPickerProps {
   /** Compact pill for headers; the default is a full-width field for studio forms. */
   compact?: boolean;
   label?: string;
+  /** Narrows the list further, e.g. to models that can edit photos. */
+  filter?: (model: AIModel) => boolean;
 }
 
 /** Shows the selected model and opens the model selection sheet on press. */
@@ -32,6 +34,7 @@ export function ModelPicker({
   onChange,
   compact,
   label,
+  filter,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
   const model = useModel(value);
@@ -66,6 +69,7 @@ export function ModelPicker({
       <ModelSheet
         visible={open}
         task={task}
+        filter={filter}
         selectedId={value}
         onClose={() => setOpen(false)}
         onSelect={m => {
@@ -83,6 +87,7 @@ interface ModelSheetProps {
   selectedId: string;
   onClose: () => void;
   onSelect: (model: AIModel) => void;
+  filter?: (model: AIModel) => boolean;
 }
 
 export function ModelSheet({
@@ -91,8 +96,10 @@ export function ModelSheet({
   selectedId,
   onClose,
   onSelect,
+  filter,
 }: ModelSheetProps) {
-  const { data: models, isLoading } = useModels(task);
+  const { data: all, isLoading } = useModels(task);
+  const models = filter ? all?.filter(filter) : all;
   const plan = useAuthStore(s => accessTier(s.user));
   const insets = useSafeAreaInsets();
 

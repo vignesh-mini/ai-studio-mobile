@@ -150,6 +150,19 @@ export function AssetViewerScreen({
       />
       {asset.type === 'image' ? (
         <Button
+          title="Edit this image"
+          icon="brush-outline"
+          variant="secondary"
+          onPress={() =>
+            navigation.navigate('Main', {
+              screen: 'Images',
+              params: { sourceAssetId: asset.id },
+            })
+          }
+        />
+      ) : null}
+      {asset.type === 'image' ? (
+        <Button
           title="Animate into a video"
           icon="videocam-outline"
           variant="secondary"
